@@ -2,20 +2,23 @@
 driver_plugin: vagrant
 
 platforms:
-- name: ubuntu-12.04
+- name: ubuntu-10.04_chef-10
   driver_config:
-    box: opscode-ubuntu-12.04
-    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/opscode_ubuntu-12.04_chef-11.4.4.box
-    require_chef_omnibus: 11.4.4
-  run_list:
-  - recipe[apt]
-- name: centos-6.4
+    box: sendgrid_ubuntu-10.04_chef-10
+    box_url: http://repo.sendgrid.net/sendgrid_ubuntu-10.04_chef-10.box
+- name: centos-6_chef-10
   driver_config:
-    box: opscode-centos-6.4
-    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4_chef-11.4.4.box
-    require_chef_omnibus: 11.4.4
-  run_list:
-  - recipe[yum::epel]
+    box: sendgrid_centos-6_chef-10
+    box_url: http://repo.sendgrid.net/sendgrid_centos-6_chef-10.box
+    network:
+      - ["forwarded_port", {guest: 80, host: 8080}]
+      - ["forwarded_port", {guest: 2003, host: 2003}]
+      - ["forwarded_port", {guest: 2004, host: 2004}]
+      - ["forwarded_port", {guest: 8126, host: 8126}]
+- name: centos-6_chef-11
+  driver_config:
+    box: sendgrid_centos-6_chef-11
+    box_url: http://repo.sendgrid.net/sendgrid_centos-6_chef-11.box
 suites:
 - name: default
   run_list: ["recipe[graphite]"]
