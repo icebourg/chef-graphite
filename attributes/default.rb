@@ -1,4 +1,4 @@
-default["graphite"]["version"]                              = "0.10.1"
+default["graphite"]["version"]                              = "0.9.11"
 default["graphite"]["home"]                                 = "/opt/graphite"
 
 default["graphite"]["carbon"]["line_receiver_interface"]    = "127.0.0.1"
