@@ -8,6 +8,19 @@ python_pip "zope.interface" do
   action :install
 end
 
+# if we listen on all IPs, send it to loopback
+if node["graphite"]["carbon"]["pickle_receiver_interface"] == "0.0.0.0"
+  ip = "127.0.0.1"
+else
+  ip = node["graphite"]["carbon"]["pickle_receiver_interface"]
+end
+
+# come up with list of destinations relay needs to send to
+destinations = []
+node["graphite"]["carbon"]["instances"].each do |instance, value|
+  destinations << "#{ip}:#{value['pickle_receiver_port']}:#{instance}"
+end
+
 template "#{node['graphite']['home']}/conf/carbon.conf" do
   mode "0644"
   source "carbon.conf.erb"
@@ -18,9 +31,11 @@ template "#{node['graphite']['home']}/conf/carbon.conf" do
     :line_receiver_interface    => node["graphite"]["carbon"]["line_receiver_interface"],
     :pickle_receiver_interface  => node["graphite"]["carbon"]["pickle_receiver_interface"],
     :cache_query_interface      => node["graphite"]["carbon"]["cache_query_interface"],
-    :log_updates                => node["graphite"]["carbon"]["log_updates"]
+    :log_updates                => node["graphite"]["carbon"]["log_updates"],
+    :instances                  => node["graphite"]["carbon"]["instances"],
+    :relay                      => node["graphite"]["carbon"]["relay"],
+    :destinations               => destinations.join(",")
   )
-  notifies :restart, "service[carbon-cache]"
 end
 
 template "#{node['graphite']['home']}/conf/storage-schemas.conf" do
@@ -28,7 +43,6 @@ template "#{node['graphite']['home']}/conf/storage-schemas.conf" do
   source "storage-schemas.conf.erb"
   owner node["apache"]["user"]
   group node["apache"]["group"]
-  notifies :restart, "service[carbon-cache]"
 end
 
 template "#{node['graphite']['home']}/conf/storage-aggregation.conf" do
@@ -36,7 +50,6 @@ template "#{node['graphite']['home']}/conf/storage-aggregation.conf" do
   source "storage-aggregation.conf.erb"
   owner node["apache"]["user"]
   group node["apache"]["group"]
-  notifies :restart, "service[carbon-cache]"
 end
 
 execute "chown" do
@@ -47,24 +60,46 @@ execute "chown" do
   end
 end
 
-template "/etc/init/carbon-cache.conf" do
+# need to configure upstart for carbon-relay
+template "/etc/init/carbon-relay.conf" do
   mode "0644"
-  source "carbon-cache.conf.erb"
+  source "carbon-relay.conf.erb"
   variables(
     :home => node["graphite"]["home"],
-    :version => node["graphite"]["version"]
+    :version => node["graphite"]["version"],
   )
 end
 
-logrotate_app "carbon" do
-  cookbook "logrotate"
-  path "#{node['graphite']['home']}/storage/log/carbon-cache/carbon-cache-a/*.log"
-  frequency "daily"
-  rotate 7
-  create "644 root root"
-end
-
-service "carbon-cache" do
+service "carbon-relay" do
   provider Chef::Provider::Service::Upstart
   action [ :enable, :start ]
+  subscribes :restart, "template \"#{node['graphite']['home']}/conf/carbon.conf\"", :delayed
+end
+
+node["graphite"]["carbon"]["instances"].each do |instance, value|
+  template "/etc/init/carbon-cache-#{instance}.conf" do
+    mode "0644"
+    source "carbon-cache.conf.erb"
+    variables(
+      :home => node["graphite"]["home"],
+      :version => node["graphite"]["version"],
+      :instance => instance
+    )
+  end
+
+  logrotate_app "carbon-cache-#{instance}" do
+    cookbook "logrotate"
+    path "#{node['graphite']['home']}/storage/log/carbon-cache/carbon-cache-#{instance}/*.log"
+    frequency "daily"
+    rotate 7
+    create "644 root root"
+  end
+
+  service "carbon-cache-#{instance}" do
+    provider Chef::Provider::Service::Upstart
+    action [ :enable, :start ]
+    subscribes :restart, "template \"#{node['graphite']['home']}/conf/carbon.conf\"", :delayed
+    subscribes :restart, "template \"#{node['graphite']['home']}/conf/storage-schemas.conf\"", :delayed
+    subscribes :restart, "template \"#{node['graphite']['home']}/conf/storage-aggregation.conf\"", :delayed
+  end
 end
