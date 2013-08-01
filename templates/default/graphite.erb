@@ -1,0 +1,13 @@
+# Accept anything from all of our own IPs. But drop anything going to carbon-cache, statsd, etc.
+
+# Internal IPs:
+-A INPUT -s 10.0.0.0/8 -j ACCEPT
+-A INPUT -s 127.0.0.0/24 -j ACCEPT
+
+# External IPs
+<% for @ip in @ip_addresses -%>
+-A INPUT -s <%= @ip %> -j ACCEPT
+<%end -%>
+
+# Now drop EVERYTHING else that comes to us publicly
+-A INPUT -p all -i eth1 -j DROP
