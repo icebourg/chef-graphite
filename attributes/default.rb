@@ -83,6 +83,6 @@ default["graphite"]["storage_aggregation"] = [
   }
 ]
 
-
-
-
+# what IPs we want to allow access to graphite ports...
+# organize this however you please, it gets flattened into a list of IPs
+default[:graphite][:ip_addresses][:localhosts]= ["127.0.0.1"]
