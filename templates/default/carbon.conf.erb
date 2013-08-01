@@ -5,9 +5,22 @@ MAX_CACHE_SIZE = inf
 MAX_UPDATES_PER_SECOND = 1000
 MAX_CREATES_PER_MINUTE = inf
 LINE_RECEIVER_INTERFACE = <%= @line_receiver_interface %>
-LINE_RECEIVER_PORT = 2003
 PICKLE_RECEIVER_INTERFACE = <%= @pickle_receiver_interface %>
-PICKLE_RECEIVER_PORT = 2004
 CACHE_QUERY_INTERFACE = <%= @cache_query_interface %>
-CACHE_QUERY_PORT = 7002
 LOG_UPDATES = <%= @log_updates ? "True" : "False" %>
+
+[relay]
+LINE_RECEIVER_INTERFACE = <%= @line_receiver_interface %>
+LINE_RECEIVER_PORT = <%= @relay["line_receiver_port"] %>
+PICKLE_RECEIVER_INTERFACE = <%= @pickle_receiver_interface %>
+PICKLE_RECEIVER_PORT = <%= @relay["pickle_receiver_port"] %>
+RELAY_METHOD = consistent-hashing
+REPLICATION_FACTOR = 0
+DESTINATIONS = <%= @destinations %>
+
+<% @instances.each do |instance, value| %>
+[cache:<%= instance %>]
+CACHE_QUERY_PORT = <%= value["cache_query_port"] %>
+LINE_RECEIVER_PORT = <%= value["line_receiver_port"] %>
+PICKLE_RECEIVER_PORT = <%= value["pickle_receiver_port"] %>
+<% end %>
