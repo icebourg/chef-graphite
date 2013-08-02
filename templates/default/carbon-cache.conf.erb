@@ -8,16 +8,17 @@ stop on runlevel [!2345]
 
 env CMD=<%= @home %>/bin/carbon-cache.py
 env PIDFILE=<%= @home %>/storage/carbon-cache-<%= @instance %>.pid
+env INSTANCE=<%= @instance %>
 
 # uncomment this for debugging
 # console output
 
 pre-start script
-  $CMD --pidfile=$PIDFILE start
+  $CMD --pidfile=$PIDFILE --instance=$INSTANCE start
 end script
 
 post-stop script
-  $CMD --pidfile=$PIDFILE stop
+  $CMD --pidfile=$PIDFILE --instance=$INSTANCE stop
 
   # don't consider this service stopped until the PID gets removed
   while [ -e $PIDFILE ]; do sleep 1 ; done
