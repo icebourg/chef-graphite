@@ -34,22 +34,26 @@ default["graphite"]["templates"]["default"]["fontBold"]     = "False"
 default["graphite"]["templates"]["default"]["fontItalic"]   = "False"
 
 #Storage Schemas
-default["graphite"]["storage_schemas"] = [
-  {
-    :stats => {
-      :priority   => "100",
-      :pattern    => "^stats\\..*",
-      :retentions => "10s:7d,1m:31d,10m:5y"
-    }
-  },
-  {
-    :catchall => {
-      :priority   => "0",
-      :pattern    => "^.*",
-      :retentions => "60s:5y"
-    }
-  }
-]
+# Just as an example. You need to specify something appropriate in your role.
+# Rules are applied in order* so anything we set here will override
+# your configuration.
+# * see: https://lists.launchpad.net/graphite-dev/msg00678.html
+##  default["graphite"]["storage_schemas"] = [
+##    {
+##      :stats => {
+##        :priority   => "100",
+##        :pattern    => "^stats\\..*",
+##        :retentions => "10s:7d,1m:31d,10m:5y"
+##      }
+##    },
+##    {
+##      :catchall => {
+##        :priority   => "0",
+##        :pattern    => "^.*",
+##        :retentions => "60s:5y"
+##      }
+##    }
+##  ]
 
 #Storage Aggregation
 default["graphite"]["storage_aggregation"] = [
