@@ -7,6 +7,10 @@ default["graphite"]["carbon"]["cache_query_interface"]      = "127.0.0.1"
 default["graphite"]["carbon"]["log_updates"]                = true
 default["graphite"]["carbon"]["whisper_dir"]                = "#{node["graphite"]["home"]}/storage/whisper"
 
+default["graphite"]["carbon"]["max_cache_size"]             = "inf"
+default["graphite"]["carbon"]["max_updates_per_second"]     = "1000"
+default["graphite"]["carbon"]["max_creates_per_minute"]     = "inf"
+
 # relay just relays incoming requests to multiple caches
 default["graphite"]["carbon"]["relay"]["line_receiver_port"]  = "2003"
 default["graphite"]["carbon"]["relay"]["pickle_receiver_port"]= "2004"
@@ -33,27 +37,17 @@ default["graphite"]["templates"]["default"]["fontSize"]     = "10"
 default["graphite"]["templates"]["default"]["fontBold"]     = "False"
 default["graphite"]["templates"]["default"]["fontItalic"]   = "False"
 
-#Storage Schemas
-# Just as an example. You need to specify something appropriate in your role.
-# Rules are applied in order* so anything we set here will override
-# your configuration.
-# * see: https://lists.launchpad.net/graphite-dev/msg00678.html
-##  default["graphite"]["storage_schemas"] = [
-##    {
-##      :stats => {
-##        :priority   => "100",
-##        :pattern    => "^stats\\..*",
-##        :retentions => "10s:7d,1m:31d,10m:5y"
-##      }
-##    },
-##    {
-##      :catchall => {
-##        :priority   => "0",
-##        :pattern    => "^.*",
-##        :retentions => "60s:5y"
-##      }
-##    }
-##  ]
+# Storage Schemas
+# => We'd like to keep carbon data by default. Default for carbon
+# instrumentation is 60 seconds. If you change that, change it here too.
+default["graphite"]["storage_schemas"] = [
+  {
+    :carbon => {
+      :pattern    => "^carbon\..*",
+      :retentions => "60:90d"
+    }
+  }
+]
 
 #Storage Aggregation
 default["graphite"]["storage_aggregation"] = [
